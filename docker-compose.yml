@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  can-modbus-bridge:
+    build: .
+    container_name: can-modbus-bridge
+    restart: unless-stopped
+    network_mode: host
+    privileged: true  # Required for CAN interface access
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+      - ./*.dbc:/app/:ro  # Mount DBC files
+      - /dev:/dev  # Access to CAN devices
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "5020:5020"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('localhost', 5020)); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
